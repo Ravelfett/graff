@@ -68,6 +68,7 @@ document.onmouseup = function (e) {
           c2 = new VConnection(1);
           graf.nodes[clicking].connect(c1, i);
           graf.nodes[i].connect(c2, clicking);
+		  calc();
         }
       }
     }
@@ -117,14 +118,17 @@ let clicking = 0;
 const graf = new Graph();
 ns = []
 for(let i = 0; i < 20; i++){
-  ns.push(graf.addNode(new VNode()))
+  let n = new VNode();
+  /*n.x = Math.cos(i/20*Math.PI*2)*300+width/2;
+  n.y = Math.sin(i/20*Math.PI*2)*300+height/2;*/
+  ns.push(graf.addNode(n))
 }
 for(let i = 0; i < 40; i++){
   n1 = ns[Math.floor(Math.random()*ns.length)]
   n2 = ns[Math.floor(Math.random()*ns.length)]
   node1 = graf.nodes[n1];
   node2 = graf.nodes[n2];
-  if(((node1.x-node2.y)**2+(node1.y-node2.y)**2)<500**2){
+  if(((node1.x-node2.y)**2+(node1.y-node2.y)**2)>700**2){
     let w = Math.floor(Math.random()*5)
     c1 = new VConnection(w);
     c2 = new VConnection(w);
@@ -173,12 +177,19 @@ function path(graf, n1, n2){
   }
 }
 
-graf.nodes[ns[0]].color = "rgb(184, 222, 78)";
-graf.nodes[ns[3]].color = "rgb(14, 67, 138)";
-let paf = path(graf, ns[0], ns[3]);
-for(let i of paf.path.slice(1)){
-  graf.nodes[i].color = "red"
+function calc(){
+  for(let i in graf.nodes){
+    graf.nodes[i].color = "hsl(199, 100%, 50%)";
+  }
+  graf.nodes[ns[0]].color = "rgb(184, 222, 78)";
+  graf.nodes[ns[3]].color = "rgb(14, 67, 138)";
+  let paf = path(graf, ns[0], ns[3]);
+  for(let i of paf.path.slice(1)){
+    graf.nodes[i].color = "red"
+  }
 }
+
+calc();
 
 
 function animate() {
@@ -194,6 +205,7 @@ function animate() {
     let node1 = graf.nodes[i]
     for(const j of node1.connections){
       let node2 = graf.nodes[j.target];
+	  continue
       if ((node1.x-node2.x)**2+(node1.y-node2.y)**2 > 800**2) {
         node1.ax += (node2.x-node1.x)/4000;
         node1.ay += (node2.y-node1.y)/4000;
