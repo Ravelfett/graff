@@ -114,27 +114,63 @@ const mouse = [0, 0];
 const clicks = [false, false];
 let clicking = 0;
 
+function pointsToEquation(p1x, p1y, p2x, p2y){
+  let dif = p2y - p1y;
+  let a = (p2x-p1x)/dif;
+  let b = p1y-(a*p1x);
+  return [a, b];
+}
+
+function intersection(l1, l2){
+  let x = (l2[1]-l1[1])/(l1[0]-l2[0]);
+  return [x, l1[0]*x+l1[1]];
+}
+
+function intersects(p1x, p1y, p2x, p2y, p3x, p3y, p4x, p4y){
+  let lines = [pointsToEquation(p1x, p1y, p2x, p2y), pointsToEquation(p3x, p3y, p4x, p4y)];
+  let inter = intersection(lines[0], lines[1]);
+  let x = inter[0]
+  return ((x<p1x)^(x<p2x)&&(x<p3x)^(x<p4x));
+}
 
 const graf = new Graph();
 ns = []
-for(let i = 0; i < 20; i++){
+for(let i = 0; i < 7; i++){
   let n = new VNode();
   /*n.x = Math.cos(i/20*Math.PI*2)*300+width/2;
   n.y = Math.sin(i/20*Math.PI*2)*300+height/2;*/
   ns.push(graf.addNode(n))
 }
-for(let i = 0; i < 40; i++){
-  n1 = ns[Math.floor(Math.random()*ns.length)]
-  n2 = ns[Math.floor(Math.random()*ns.length)]
-  node1 = graf.nodes[n1];
-  node2 = graf.nodes[n2];
-  if(((node1.x-node2.y)**2+(node1.y-node2.y)**2)>700**2){
+for(let i = 0; i < 14; i++){
+  let n1 = ns[Math.floor(Math.random()*ns.length)]
+  let n2 = ns[Math.floor(Math.random()*ns.length)]
+  let node1 = graf.nodes[n1];
+  let node2 = graf.nodes[n2];
+  let inttt = false;
+  for(let j in graf.nodes){
+	let n3 = graf.nodes[j];
+	if(!(n3 == n1 || n3 == n2)){
+	  for(let k of n3.connections){
+		let n4 = graf.nodes[k.target];
+		if(!(n4 == n1 || n4 == n2)){
+		 let inttttt = intersects(node1.x, node1.y, node2.x, node2.y, n3.x, n3.y, n4.x, n4.y);
+		  //console.log(Math.floor(node1.x), Math.floor(node1.y), Math.floor(node2.x), Math.floor(node2.y), Math.floor(n3.x), Math.floor(n3.y), Math.floor(n4.x), Math.floor(n4.y), inttttt)
+		  if(inttttt){
+		    inttt = true;
+		  }
+		}
+	  }
+	}
+  }
+  console.log(node1, node2)
+  if(!inttt){
     let w = Math.floor(Math.random()*5)
     c1 = new VConnection(w);
     c2 = new VConnection(w);
     node1.connect(c1, n2);
     node2.connect(c2, n1);
   }
+  //debugger
 }
 
 
