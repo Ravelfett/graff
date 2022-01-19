@@ -88,12 +88,12 @@ class VNode extends Node {
     this.ay = 0;
   }
   update() {
-    this.vx += this.ax;
-    this.vy += this.ay;
+    this.vx += this.ax/50;
+    this.vy += this.ay/50;
     this.x += this.vx;
     this.y += this.vy;
-    this.vx *= 0.96;
-    this.vy *= 0.96;
+    this.vx *= 0.88;
+    this.vy *= 0.88;
     this.ax = 0;
     this.ay = 0;
   }
@@ -115,8 +115,8 @@ const clicks = [false, false];
 let clicking = 0;
 
 function pointsToEquation(p1x, p1y, p2x, p2y) {
-  let dif = p2y - p1y;
-  let a = (p2x - p1x) / dif;
+  let dif = p1x - p2x;
+  let a = (p1y - p2y) / dif;
   let b = p1y - (a * p1x);
   return [a, b];
 }
@@ -135,42 +135,64 @@ function intersects(p1x, p1y, p2x, p2y, p3x, p3y, p4x, p4y) {
 
 const graf = new Graph();
 ns = []
-for (let i = 0; i < 7; i++) {
+for (let i = 0; i < 30; i++) {
   let n = new VNode();
   /*n.x = Math.cos(i/20*Math.PI*2)*300+width/2;
   n.y = Math.sin(i/20*Math.PI*2)*300+height/2;*/
+  let close = true;
+  let c = 0;
+  while(close && c < 50){
+    c++;
+    n.x = Math.random()*width;
+    n.y = Math.random()*height;
+    close = false;
+    for(let i in graf.nodes){
+      let n2 = graf.nodes[i];
+      if((n.x - n2.x) ** 2 + (n.y - n2.y) ** 2 < 200 ** 2){
+        close = true;
+      }
+    }
+  }
   ns.push(graf.addNode(n))
 }
-for (let i = 0; i < 14; i++) {
+for (let i = 0; i < 200; i++) {
   let n1 = ns[Math.floor(Math.random() * ns.length)]
   let n2 = ns[Math.floor(Math.random() * ns.length)]
   let node1 = graf.nodes[n1];
   let node2 = graf.nodes[n2];
-  let inttt = false;
-  for (let j in graf.nodes) {
-    let n3 = graf.nodes[j];
-    if (!(n3 == n1 || n3 == n2)) {
-      for (let k of n3.connections) {
-        let n4 = graf.nodes[k.target];
-        if (!(n4 == n1 || n4 == n2)) {
-          let inttttt = intersects(node1.x, node1.y, node2.x, node2.y, n3.x, n3.y, n4.x, n4.y);
-          //console.log(Math.floor(node1.x), Math.floor(node1.y), Math.floor(node2.x), Math.floor(node2.y), Math.floor(n3.x), Math.floor(n3.y), Math.floor(n4.x), Math.floor(n4.y), inttttt)
-          if (inttttt) {
-            inttt = true;
+  let dont = false;
+  for(let i of node1.connections){
+    if(node2.id == i.target){
+      dont = true;
+    }
+  }
+  if(node1==node2){
+    dont = true;
+  }
+  if(!dont){
+    let inttt = false;
+    for (let j in graf.nodes) {
+      let n3 = graf.nodes[j];
+      if (!(n3 == n1 || n3 == n2)) {
+        for (let k of n3.connections) {
+          let n4 = graf.nodes[k.target];
+          if (!(n4 == n1 || n4 == n2)) {
+            let inttttt = intersects(node1.x, node1.y, node2.x, node2.y, n3.x, n3.y, n4.x, n4.y);
+            if (inttttt) {
+              inttt = true;
+            }
           }
         }
       }
     }
+    if (!inttt) {
+      let w = Math.floor(Math.random() * 5)
+      c1 = new VConnection(w);
+      c2 = new VConnection(w);
+      node1.connect(c1, n2);
+      node2.connect(c2, n1);
+    }
   }
-  console.log(node1, node2)
-  if (!inttt) {
-    let w = Math.floor(Math.random() * 5)
-    c1 = new VConnection(w);
-    c2 = new VConnection(w);
-    node1.connect(c1, n2);
-    node2.connect(c2, n1);
-  }
-  //debugger
 }
 
 
@@ -225,7 +247,7 @@ function calc() {
     graf.nodes[i].color = "hsl(199, 100%, 50%)";
   }
   graf.nodes[ns[0]].color = "rgb(184, 222, 78)";
-  graf.nodes[ns[3]].color = "rgb(14, 67, 138)";
+  graf.nodes[ns[3]].color = "rgb(138, 14, 129)";
   let paf = path(graf, ns[0], ns[3]);
   for (let i of paf.path.slice(1)) {
     graf.nodes[i].color = "red"
@@ -261,12 +283,41 @@ function animate() {
   }
 
   if (clicks[0]) {
-    graf.nodes[clicking].ax = (mouse[0] - graf.nodes[clicking].x) / 200;
-    graf.nodes[clicking].ay = (mouse[1] - graf.nodes[clicking].y) / 200;
+    graf.nodes[clicking].ax += (mouse[0] - graf.nodes[clicking].x);
+    graf.nodes[clicking].ay += (mouse[1] - graf.nodes[clicking].y);
   }
   for (const i in graf.nodes) {
     graf.nodes[i].update();
   }
+
+  /*for (const i in graf.nodes) {
+    const n1 = graf.nodes[i];
+    for(const j of n1.connections){
+      j.color = "white";
+    }
+  }
+
+  for (const i in graf.nodes) {
+    const n1 = graf.nodes[i];
+    for(const j of n1.connections){
+      const n2 = graf.nodes[j.target];
+      for (const k in graf.nodes) {
+        const n3 = graf.nodes[k];
+        if (!(n3 == n1 || n3 == n2)) {
+          for (const l of n3.connections) {
+            const n4 = graf.nodes[l.target];
+            if (!(n4 == n1 || n4 == n2)) {
+              const inttttt = intersects(n1.x, n1.y, n2.x, n2.y, n3.x, n3.y, n4.x, n4.y);
+              if (inttttt) {
+                j.color = "red";
+              }
+            }
+          }
+        }
+      }
+    }
+  }*/
+
 
   for (const i in graf.nodes) {
     for (const j of graf.nodes[i].connections) {
@@ -295,7 +346,7 @@ function animate() {
     context.fill();
     context.closePath();
   }
-  context.fillStyle = "rgb(163, 180, 231)";
+  context.fillStyle = "rgb(255, 255, 255)";
   context.font = '48px consolas';
   context.textAlign = "center";
   context.textBaseline = "middle";
