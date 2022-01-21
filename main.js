@@ -51,8 +51,12 @@ document.onmousedown = function(e) {
       if ((graf.nodes[i].x - mouse[0]) ** 2 + (graf.nodes[i].y - mouse[1]) ** 2 < 60 ** 2) {
         clicks[1] = true;
         clicking = i;
+        return;
       }
     }
+    right = true;
+    oMouse[0] = mouse[0];
+    oMouse[1] = mouse[1];
   }
 };
 
@@ -61,11 +65,13 @@ document.onmouseup = function(e) {
     clicks[0] = false;
   }
   if (e.button == 2) {
+    right = false;
     if (clicks[1]) {
       for (const i in graf.nodes) {
         if ((graf.nodes[i].x - mouse[0]) ** 2 + (graf.nodes[i].y - mouse[1]) ** 2 < 60 ** 2) {
-          c1 = new VConnection(1);
-          c2 = new VConnection(1);
+          let w = Math.floor(Math.random() * 5 + 1)
+          c1 = new VConnection(w);
+          c2 = new VConnection(w);
           graf.nodes[clicking].connect(c1, i);
           graf.nodes[i].connect(c2, clicking);
           calc();
@@ -111,7 +117,9 @@ class VConnection extends Connection {
 }
 
 const mouse = [0, 0];
+const oMouse = [0, 0];
 const clicks = [false, false];
+let right = false;
 let clicking = 0;
 
 function pointsToEquation(p1x, p1y, p2x, p2y) {
@@ -134,14 +142,15 @@ function intersects(p1x, p1y, p2x, p2y, p3x, p3y, p4x, p4y) {
 }
 
 const graf = new Graph();
-ns = []
+ns = [];
+t = 0;
 for (let i = 0; i < 30; i++) {
   let n = new VNode();
   /*n.x = Math.cos(i/20*Math.PI*2)*300+width/2;
   n.y = Math.sin(i/20*Math.PI*2)*300+height/2;*/
   let close = true;
   let c = 0;
-  while(close && c < 50){
+  while(close && c < 100){
     c++;
     n.x = Math.random()*width;
     n.y = Math.random()*height;
@@ -155,12 +164,15 @@ for (let i = 0; i < 30; i++) {
   }
   ns.push(graf.addNode(n))
 }
-for (let i = 0; i < 200; i++) {
+for (let i = 0; i < 1000; i++) {
   let n1 = ns[Math.floor(Math.random() * ns.length)]
   let n2 = ns[Math.floor(Math.random() * ns.length)]
   let node1 = graf.nodes[n1];
   let node2 = graf.nodes[n2];
   let dont = false;
+  if(Math.pow(node1.x-node2.x, 2) + Math.pow(node1.y-node2.y, 2) > Math.pow(500, 2)){
+    dont = true;
+  }
   for(let i of node1.connections){
     if(node2.id == i.target){
       dont = true;
@@ -186,7 +198,7 @@ for (let i = 0; i < 200; i++) {
       }
     }
     if (!inttt) {
-      let w = Math.floor(Math.random() * 5)
+      let w = Math.floor(Math.random() * 5 + 1)
       c1 = new VConnection(w);
       c2 = new VConnection(w);
       node1.connect(c1, n2);
@@ -208,12 +220,13 @@ function path(graf, n1, n2) {
   l[n1].distance = 0;
   while (true) {
     let min = null;
+    console.log(JSON.stringify(l));
     for (let i in l) {
       if (l[i].distance != null && !l[i].visited) {
         if (min == null) {
           min = i;
         }
-        if (l[min] > l[i]) {
+        if (l[min].distance > l[i].distance) {
           min = i;
         }
       }
@@ -224,6 +237,7 @@ function path(graf, n1, n2) {
         path: []
       };
     }
+    console.log(min);
     if (min == n2) {
       return l[min];
     }
@@ -265,7 +279,7 @@ function animate() {
   context.fill();
   context.closePath();
 
-
+  t++;
   for (const i in graf.nodes) {
     let node1 = graf.nodes[i]
     for (const j of node1.connections) {
@@ -288,6 +302,19 @@ function animate() {
   }
   for (const i in graf.nodes) {
     graf.nodes[i].update();
+  }
+
+  if (right&&t%3==0) {
+    for(let i in graf.nodes){
+      const n1 = graf.nodes[i];
+      n1.connections = n1.connections.filter((con)=>{
+        const n2 = graf.nodes[con.target];
+        return !intersects(mouse[0], mouse[1], oMouse[0], oMouse[1], n1.x, n1.y, n2.x, n2.y);
+      })
+    }
+    calc();
+    oMouse[0] = mouse[0];
+    oMouse[1] = mouse[1];
   }
 
   /*for (const i in graf.nodes) {
